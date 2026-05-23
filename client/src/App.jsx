@@ -1,10 +1,10 @@
 import { BrowserRouter, Routes, Route, NavLink } from "react-router-dom";
 
-import Dashboard from "./pages/dashboard";
-import Services from "./pages/services";
-import AddService from "./pages/addservice";
-import ServiceDetails from "./pages/servicedetails";
-import Settings from "./pages/settings";
+import Dashboard from "./pages/Dashboard";
+import Services from "./pages/Services";
+import AddService from "./pages/AddService";
+import ServiceDetails from "./pages/ServiceDetails";
+import Settings from "./pages/Settings";
 
 function App() {
   return (
