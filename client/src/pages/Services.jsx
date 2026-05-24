@@ -95,6 +95,7 @@ function Services() {
           <option value="All">All Status</option>
           <option value="Active">Active</option>
           <option value="Paused">Paused</option>
+          <option value="Inactive">Inactive</option>
         </select>
       </div>
 

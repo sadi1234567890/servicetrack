@@ -1,6 +1,13 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Layers, CheckCircle, DollarSign, PauseCircle } from "lucide-react";
+import {
+  Layers,
+  CheckCircle,
+  DollarSign,
+  PauseCircle,
+  AlertCircle,
+  CalendarClock,
+} from "lucide-react";
 import StatCard from "../components/StatCard";
 import { useServices } from "../context/ServiceContext";
 
@@ -16,7 +23,11 @@ function Dashboard() {
     (service) => service.status === "Paused"
   );
 
-  const monthlySpend = services.reduce(
+  const inactiveServices = services.filter(
+    (service) => service.status === "Inactive"
+  );
+
+  const monthlySpend = activeServices.reduce(
     (total, service) => total + Number(service.price || 0),
     0
   );
@@ -29,7 +40,28 @@ function Dashboard() {
     return highest;
   }, null);
 
-  const upcomingRenewals = activeServices.length;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const nextThirtyDays = new Date(today);
+  nextThirtyDays.setDate(today.getDate() + 30);
+  nextThirtyDays.setHours(23, 59, 59, 999);
+
+  const upcomingRenewals = services.filter((service) => {
+    if (!service.renewalDate) {
+      return false;
+    }
+
+    const renewalDate = new Date(service.renewalDate);
+    renewalDate.setHours(0, 0, 0, 0);
+
+    return (
+      renewalDate >= today &&
+      renewalDate <= nextThirtyDays &&
+      service.status === "Active"
+    );
+  });
+
   const recentServices = [...services].slice(0, 4);
 
   const searchedServices = services.filter((service) => {
@@ -65,7 +97,7 @@ function Dashboard() {
           <p className="eyebrow">Smart Services Dashboard</p>
           <h1>Welcome back to ServiceTrack</h1>
           <p>
-            Track your services, monitor monthly spending, and stay ahead of
+            Track your services, monitor active spending, and stay ahead of
             upcoming renewals from one clean dashboard.
           </p>
         </div>
@@ -107,11 +139,7 @@ function Dashboard() {
                     </div>
 
                     <span
-                      className={
-                        service.status === "Active"
-                          ? "status-badge active"
-                          : "status-badge paused"
-                      }
+                      className={`status-badge ${service.status.toLowerCase()}`}
                     >
                       {service.status}
                     </span>
@@ -125,34 +153,60 @@ function Dashboard() {
         )}
       </div>
 
-      <div className="stats-grid">
-        <StatCard
-          title="Total Services"
-          value={services.length}
-          description="Services currently being tracked"
-          icon={Layers}
-        />
+      <div className="stats-grid dashboard-stats-grid">
+        <Link className="stat-card-link" to="/services">
+          <StatCard
+            title="Total Services"
+            value={services.length}
+            description="All services being tracked"
+            icon={Layers}
+          />
+        </Link>
 
-        <StatCard
-          title="Active Services"
-          value={activeServices.length}
-          description="Currently active subscriptions"
-          icon={CheckCircle}
-        />
+        <Link className="stat-card-link" to="/services">
+          <StatCard
+            title="Active Services"
+            value={activeServices.length}
+            description="Currently active subscriptions"
+            icon={CheckCircle}
+          />
+        </Link>
 
-        <StatCard
-          title="Monthly Spend"
-          value={`$${monthlySpend.toFixed(2)}`}
-          description="Estimated total monthly cost"
-          icon={DollarSign}
-        />
+        <Link className="stat-card-link" to="/services">
+          <StatCard
+            title="Monthly Spend"
+            value={`$${monthlySpend.toFixed(2)}`}
+            description="Active monthly service cost"
+            icon={DollarSign}
+          />
+        </Link>
 
-        <StatCard
-          title="Paused Services"
-          value={pausedServices.length}
-          description="Services currently paused"
-          icon={PauseCircle}
-        />
+        <Link className="stat-card-link" to="/services">
+          <StatCard
+            title="Paused Services"
+            value={pausedServices.length}
+            description="Services currently paused"
+            icon={PauseCircle}
+          />
+        </Link>
+
+        <Link className="stat-card-link" to="/services">
+          <StatCard
+            title="Inactive Services"
+            value={inactiveServices.length}
+            description="Services past renewal date"
+            icon={AlertCircle}
+          />
+        </Link>
+
+        <Link className="stat-card-link" to="/services">
+          <StatCard
+            title="Upcoming Renewals"
+            value={upcomingRenewals.length}
+            description="Active services renewing within 30 days"
+            icon={CalendarClock}
+          />
+        </Link>
       </div>
 
       <div className="dashboard-grid">
@@ -160,7 +214,7 @@ function Dashboard() {
           <div className="panel-header">
             <div>
               <h2>Spending Insight</h2>
-              <p>Your current service spending summary.</p>
+              <p>Your current active service spending summary.</p>
             </div>
           </div>
 
@@ -180,8 +234,14 @@ function Dashboard() {
 
           <div className="insight-box">
             <p>Upcoming Renewals</p>
-            <h3>{upcomingRenewals}</h3>
-            <span>Active services that need tracking</span>
+            <h3>{upcomingRenewals.length}</h3>
+            <span>Active services renewing within the next 30 days</span>
+          </div>
+
+          <div className="insight-box">
+            <p>Inactive Services</p>
+            <h3>{inactiveServices.length}</h3>
+            <span>Services that have crossed their renewal date</span>
           </div>
         </div>
 
@@ -200,7 +260,11 @@ function Dashboard() {
           ) : (
             <div className="recent-list">
               {recentServices.map((service) => (
-                <div className="recent-item" key={service._id || service.id}>
+                <Link
+                  className="recent-item"
+                  to={`/services/${service._id || service.id}`}
+                  key={service._id || service.id}
+                >
                   <div>
                     <h3>{service.name}</h3>
                     <p>{service.category}</p>
@@ -210,7 +274,7 @@ function Dashboard() {
                     <strong>${Number(service.price || 0).toFixed(2)}</strong>
                     <span>{service.status}</span>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}

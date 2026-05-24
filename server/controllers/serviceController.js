@@ -3,6 +3,20 @@ const Service = require("../models/Service");
 // GET all services for logged-in user
 const getServices = async (req, res) => {
   try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    await Service.updateMany(
+      {
+        user: req.user._id,
+        renewalDate: { $lt: today },
+        status: { $ne: "Inactive" },
+      },
+      {
+        $set: { status: "Inactive" },
+      }
+    );
+
     const services = await Service.find({ user: req.user._id }).sort({
       createdAt: -1,
     });
@@ -44,19 +58,44 @@ const createService = async (req, res) => {
   try {
     const { name, category, price, renewalDate, status, description } = req.body;
 
-    if (!name || !category || price === undefined || !renewalDate || !description) {
+    if (
+      !name ||
+      !category ||
+      price === undefined ||
+      !renewalDate ||
+      !description
+    ) {
       return res.status(400).json({
         message: "Please provide all required service fields.",
       });
     }
 
+    const existingService = await Service.findOne({
+      user: req.user._id,
+      name: name.trim(),
+    });
+
+    if (existingService) {
+      return res.status(400).json({
+        message: "This service already exists in your account.",
+      });
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const renewal = new Date(renewalDate);
+    renewal.setHours(0, 0, 0, 0);
+
+    const finalStatus = renewal < today ? "Inactive" : status || "Active";
+
     const service = await Service.create({
       user: req.user._id,
-      name,
+      name: name.trim(),
       category,
       price,
       renewalDate,
-      status: status || "Active",
+      status: finalStatus,
       description,
     });
 
@@ -71,7 +110,6 @@ const createService = async (req, res) => {
     });
   }
 };
-
 // UPDATE service
 const updateService = async (req, res) => {
   try {
@@ -86,12 +124,31 @@ const updateService = async (req, res) => {
       });
     }
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const renewal = new Date(req.body.renewalDate || service.renewalDate);
+    renewal.setHours(0, 0, 0, 0);
+
+    let finalStatus = req.body.status || service.status;
+
+    if (renewal < today) {
+      finalStatus = "Inactive";
+    }
+
+    if (renewal >= today && service.status === "Inactive") {
+      finalStatus = "Active";
+    }
+
     const updatedService = await Service.findOneAndUpdate(
       {
         _id: req.params.id,
         user: req.user._id,
       },
-      req.body,
+      {
+        ...req.body,
+        status: finalStatus,
+      },
       {
         new: true,
         runValidators: true,
@@ -109,7 +166,6 @@ const updateService = async (req, res) => {
     });
   }
 };
-
 // DELETE service
 const deleteService = async (req, res) => {
   try {
@@ -137,7 +193,7 @@ const deleteService = async (req, res) => {
   }
 };
 
-// CHANGE Active/Paused status
+// TOGGLE Active/Paused status
 const toggleServiceStatus = async (req, res) => {
   try {
     const service = await Service.findOne({
@@ -148,6 +204,13 @@ const toggleServiceStatus = async (req, res) => {
     if (!service) {
       return res.status(404).json({
         message: "Service not found.",
+      });
+    }
+
+    if (service.status === "Inactive") {
+      return res.status(400).json({
+        message:
+          "Inactive services cannot be toggled. Please update the renewal date first.",
       });
     }
 

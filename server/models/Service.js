@@ -26,11 +26,11 @@ const serviceSchema = new mongoose.Schema(
       type: Date,
       required: [true, "Renewal date is required"],
     },
-    status: {
-      type: String,
-      enum: ["Active", "Paused"],
-      default: "Active",
-    },
+ status: {
+  type: String,
+  enum: ["Active", "Paused", "Inactive"],
+  default: "Active",
+},
     description: {
       type: String,
       required: [true, "Description is required"],
