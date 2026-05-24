@@ -9,6 +9,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./context/AuthContext";
+import EditService from "./pages/EditService";
 
 function App() {
   const { isAuthenticated, logout, user } = useAuth();
@@ -90,7 +91,16 @@ function App() {
                   <Settings />
                 </ProtectedRoute>
               }
+              
             />
+            <Route
+               path="/services/:id/edit"
+               element={
+                 <ProtectedRoute>
+                   <EditService />
+                 </ProtectedRoute>
+               }
+             />
           </Routes>
         </main>
       </div>

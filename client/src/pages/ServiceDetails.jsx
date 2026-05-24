@@ -49,6 +49,10 @@ function ServiceDetails() {
         Back to Services
       </Link>
 
+      <Link className="details-link" to={`/services/${id}/edit`}>
+         Edit Service
+      </Link>
+
       <div className="detail-card">
         <div className="service-card-header">
           <div>
