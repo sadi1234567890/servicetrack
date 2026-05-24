@@ -3,9 +3,18 @@ import ServiceCard from "../components/ServiceCard";
 import { useServices } from "../context/ServiceContext";
 
 function Services() {
-  const { services = [], loading, error, fetchServices } = useServices();
+  const {
+    services = [],
+    loading,
+    error,
+    fetchServices,
+    removeService,
+    changeServiceStatus,
+  } = useServices();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [actionError, setActionError] = useState("");
 
   const filteredServices = services.filter((service) => {
     const matchesSearch =
@@ -17,6 +26,32 @@ function Services() {
 
     return matchesSearch && matchesStatus;
   });
+
+  async function handleDelete(id) {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this service?"
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setActionError("");
+      await removeService(id);
+    } catch (err) {
+      setActionError(err.message || "Unable to delete service.");
+    }
+  }
+
+  async function handleToggleStatus(id) {
+    try {
+      setActionError("");
+      await changeServiceStatus(id);
+    } catch (err) {
+      setActionError(err.message || "Unable to update service status.");
+    }
+  }
 
   if (loading) {
     return <p>Loading services...</p>;
@@ -41,17 +76,21 @@ function Services() {
         View, search, and manage all your recurring services.
       </p>
 
-      <div className="filter-section">
+      {actionError && <p className="error-text">{actionError}</p>}
+
+      <div className="toolbar">
         <input
           type="text"
           placeholder="Search services..."
           value={searchTerm}
           onChange={(event) => setSearchTerm(event.target.value)}
+          aria-label="Search services"
         />
 
         <select
           value={statusFilter}
           onChange={(event) => setStatusFilter(event.target.value)}
+          aria-label="Filter services by status"
         >
           <option value="All">All Status</option>
           <option value="Active">Active</option>
@@ -59,15 +98,20 @@ function Services() {
         </select>
       </div>
 
-      <div className="services-list">
-        {filteredServices.length > 0 ? (
-          filteredServices.map((service) => (
-            <ServiceCard key={service._id || service.id} service={service} />
-          ))
-        ) : (
-          <p>No services found.</p>
-        )}
-      </div>
+      {filteredServices.length === 0 ? (
+        <p>No services found.</p>
+      ) : (
+        <div className="services-grid">
+          {filteredServices.map((service) => (
+            <ServiceCard
+              key={service._id || service.id}
+              service={service}
+              onDelete={handleDelete}
+              onToggleStatus={handleToggleStatus}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 }

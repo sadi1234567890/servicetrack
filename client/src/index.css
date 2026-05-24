@@ -489,3 +489,37 @@ a {
 .logout-button:hover {
   background: #ffe6f3;
 }
+.card-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+
+.secondary-button {
+  background: #ffe6f3;
+  color: #c21873;
+  border: 1px solid #ffb3d6;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.secondary-button:hover {
+  background: #ffd6ec;
+}
+
+.danger-button {
+  background: #b91c5c;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.danger-button:hover {
+  background: #8a0f51;
+}

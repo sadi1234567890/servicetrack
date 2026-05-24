@@ -1,13 +1,13 @@
 import { Link } from "react-router-dom";
 
-function ServiceCard({ service }) {
+function ServiceCard({ service, onDelete, onToggleStatus }) {
   const serviceId = service._id || service.id;
 
   return (
     <article className="service-card">
       <div className="service-card-header">
         <div>
-          <h2>{service.name}</h2>
+          <h3>{service.name}</h3>
           <p>{service.category}</p>
         </div>
 
@@ -24,20 +24,40 @@ function ServiceCard({ service }) {
 
       <p className="service-description">{service.description}</p>
 
-      <p className="service-price">
-        <strong>${Number(service.price || 0).toFixed(2)}</strong> / month
-      </p>
+      <div className="service-meta">
+        <p>
+          <strong>${Number(service.price || 0).toFixed(2)}</strong> / month
+        </p>
 
-      <p className="service-renewal">
-        Renews:{" "}
-        {service.renewalDate
-          ? new Date(service.renewalDate).toISOString().split("T")[0]
-          : "No date"}
-      </p>
+        <p>
+          Renews:{" "}
+          {service.renewalDate
+            ? new Date(service.renewalDate).toISOString().split("T")[0]
+            : "No date"}
+        </p>
+      </div>
 
-      <Link className="details-button" to={`/services/${serviceId}`}>
-        View Details
-      </Link>
+      <div className="card-actions">
+        <Link className="details-link" to={`/services/${serviceId}`}>
+          View Details
+        </Link>
+
+        <button
+          className="secondary-button"
+          type="button"
+          onClick={() => onToggleStatus(serviceId)}
+        >
+          {service.status === "Active" ? "Pause" : "Activate"}
+        </button>
+
+        <button
+          className="danger-button"
+          type="button"
+          onClick={() => onDelete(serviceId)}
+        >
+          Delete
+        </button>
+      </div>
     </article>
   );
 }
