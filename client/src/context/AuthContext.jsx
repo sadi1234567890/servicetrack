@@ -22,13 +22,6 @@ export function AuthProvider({ children }) {
 
   const register = async (userData) => {
     const data = await registerUser(userData);
-
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
-
-    setUser(data.user);
-    setToken(data.token);
-
     return data;
   };
 
@@ -70,5 +63,11 @@ export function AuthProvider({ children }) {
 }
 
 export function useAuth() {
-  return useContext(AuthContext);
+  const context = useContext(AuthContext);
+
+  if (!context) {
+    throw new Error("useAuth must be used inside AuthProvider");
+  }
+
+  return context;
 }

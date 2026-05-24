@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useServices } from "../context/servicecontext";
+import { useServices } from "../context/ServiceContext";
 
 function AddService() {
   const navigate = useNavigate();
@@ -15,7 +15,8 @@ function AddService() {
     description: "",
   });
 
-  const [errors, setErrors] = useState({});
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -26,48 +27,23 @@ function AddService() {
     });
   }
 
-  function validateForm() {
-    const newErrors = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = "Service name is required.";
-    }
-
-    if (!formData.category.trim()) {
-      newErrors.category = "Category is required.";
-    }
-
-    if (!formData.price || Number(formData.price) <= 0) {
-      newErrors.price = "Enter a valid monthly price.";
-    }
-
-    if (!formData.renewalDate) {
-      newErrors.renewalDate = "Renewal date is required.";
-    }
-
-    if (!formData.description.trim()) {
-      newErrors.description = "Description is required.";
-    }
-
-    return newErrors;
-  }
-
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
+    setError("");
+    setLoading(true);
 
-    const validationErrors = validateForm();
-    setErrors(validationErrors);
+    try {
+      await addService({
+        ...formData,
+        price: Number(formData.price),
+      });
 
-    if (Object.keys(validationErrors).length > 0) {
-      return;
+      navigate("/services");
+    } catch (err) {
+      setError(err.message || "Unable to add service.");
+    } finally {
+      setLoading(false);
     }
-
-    addService({
-      ...formData,
-      price: Number(formData.price),
-    });
-
-    navigate("/services");
   }
 
   return (
@@ -76,6 +52,8 @@ function AddService() {
       <p className="page-subtitle">
         Add a new subscription, utility, or booking service.
       </p>
+
+      {error && <p className="error-text">{error}</p>}
 
       <form className="service-form" onSubmit={handleSubmit}>
         <div className="form-group">
@@ -87,8 +65,8 @@ function AddService() {
             value={formData.name}
             onChange={handleChange}
             placeholder="Example: Netflix"
+            required
           />
-          {errors.name && <p className="error-text">{errors.name}</p>}
         </div>
 
         <div className="form-group">
@@ -100,8 +78,8 @@ function AddService() {
             value={formData.category}
             onChange={handleChange}
             placeholder="Example: Entertainment"
+            required
           />
-          {errors.category && <p className="error-text">{errors.category}</p>}
         </div>
 
         <div className="form-group">
@@ -110,11 +88,13 @@ function AddService() {
             id="price"
             name="price"
             type="number"
+            step="0.01"
+            min="0"
             value={formData.price}
             onChange={handleChange}
             placeholder="Example: 22.99"
+            required
           />
-          {errors.price && <p className="error-text">{errors.price}</p>}
         </div>
 
         <div className="form-group">
@@ -125,10 +105,8 @@ function AddService() {
             type="date"
             value={formData.renewalDate}
             onChange={handleChange}
+            required
           />
-          {errors.renewalDate && (
-            <p className="error-text">{errors.renewalDate}</p>
-          )}
         </div>
 
         <div className="form-group">
@@ -151,16 +129,14 @@ function AddService() {
             name="description"
             value={formData.description}
             onChange={handleChange}
-            placeholder="Write a short description..."
+            placeholder="Describe what this service is used for."
             rows="4"
-          ></textarea>
-          {errors.description && (
-            <p className="error-text">{errors.description}</p>
-          )}
+            required
+          />
         </div>
 
-        <button className="submit-button" type="submit">
-          Add Service
+        <button className="submit-button" type="submit" disabled={loading}>
+          {loading ? "Adding..." : "Add Service"}
         </button>
       </form>
     </section>

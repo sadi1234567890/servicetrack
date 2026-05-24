@@ -1,44 +1,104 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { servicesData } from "../data/services";
+import {
+  getServices,
+  createService,
+  updateService,
+  deleteService,
+  toggleServiceStatus,
+} from "../services/api";
 
 const ServiceContext = createContext();
 
 export function ServiceProvider({ children }) {
   const [services, setServices] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    const loadServices = setTimeout(() => {
-      try {
-        setServices(servicesData);
-        setLoading(false);
-      } catch {
-        setError("Unable to load services. Please try again.");
-        setLoading(false);
-      }
-    }, 700);
+  async function fetchServices() {
+    try {
+      setLoading(true);
+      setError("");
 
-    return () => clearTimeout(loadServices);
-  }, []);
-
-  function addService(newService) {
-    setServices((prevServices) => [
-      ...prevServices,
-      {
-        id: Date.now(),
-        ...newService,
-      },
-    ]);
+      const data = await getServices();
+      setServices(data);
+    } catch (err) {
+      setError(err.message || "Unable to load services.");
+    } finally {
+      setLoading(false);
+    }
   }
 
+  async function addService(serviceData) {
+    const data = await createService(serviceData);
+    setServices((previousServices) => [data.service, ...previousServices]);
+    return data;
+  }
+
+  async function editService(id, serviceData) {
+    const data = await updateService(id, serviceData);
+
+    setServices((previousServices) =>
+      previousServices.map((service) =>
+        service._id === id ? data.service : service
+      )
+    );
+
+    return data;
+  }
+
+  async function removeService(id) {
+    await deleteService(id);
+
+    setServices((previousServices) =>
+      previousServices.filter((service) => service._id !== id)
+    );
+  }
+
+  async function changeServiceStatus(id) {
+    const data = await toggleServiceStatus(id);
+
+    setServices((previousServices) =>
+      previousServices.map((service) =>
+        service._id === id ? data.service : service
+      )
+    );
+
+    return data;
+  }
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+
+    if (token) {
+      fetchServices();
+    }
+  }, []);
+
   return (
-    <ServiceContext.Provider value={{ services, loading, error, addService }}>
+    <ServiceContext.Provider
+      value={{
+        services,
+        setServices,
+        loading,
+        error,
+        fetchServices,
+        addService,
+        editService,
+        removeService,
+        changeServiceStatus,
+      }}
+    >
       {children}
     </ServiceContext.Provider>
   );
 }
 
 export function useServices() {
-  return useContext(ServiceContext);
+  const context = useContext(ServiceContext);
+
+  if (!context) {
+    throw new Error("useServices must be used inside ServiceProvider");
+  }
+
+  return context;
 }

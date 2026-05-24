@@ -1,27 +1,35 @@
-import StatCard from "../components/statcard";
-import { useServices } from "../context/servicecontext";
+import StatCard from "../components/StatCard";
+import { useServices } from "../context/ServiceContext";
 
 function Dashboard() {
-  const { services, loading, error } = useServices();
-
-  if (loading) {
-    return <p>Loading dashboard...</p>;
-  }
-
-  if (error) {
-    return <p>{error}</p>;
-  }
+  const { services = [], loading, error, fetchServices } = useServices();
 
   const activeServices = services.filter(
     (service) => service.status === "Active"
   );
 
   const monthlySpend = services.reduce(
-    (total, service) => total + service.price,
+    (total, service) => total + Number(service.price || 0),
     0
   );
 
   const upcomingRenewals = activeServices.length;
+
+  if (loading) {
+    return <p>Loading dashboard...</p>;
+  }
+
+  if (error) {
+    return (
+      <section>
+        <h1 className="page-title">Dashboard</h1>
+        <p className="error-text">{error}</p>
+        <button className="submit-button" onClick={fetchServices}>
+          Retry
+        </button>
+      </section>
+    );
+  }
 
   return (
     <section>

@@ -1,29 +1,41 @@
 import { Link } from "react-router-dom";
 
 function ServiceCard({ service }) {
+  const serviceId = service._id || service.id;
+
   return (
     <article className="service-card">
       <div className="service-card-header">
         <div>
-          <h3>{service.name}</h3>
+          <h2>{service.name}</h2>
           <p>{service.category}</p>
         </div>
 
-        <span className={`status-badge ${service.status.toLowerCase()}`}>
+        <span
+          className={
+            service.status === "Active"
+              ? "status-badge active"
+              : "status-badge paused"
+          }
+        >
           {service.status}
         </span>
       </div>
 
       <p className="service-description">{service.description}</p>
 
-      <div className="service-meta">
-        <p>
-          <strong>${service.price.toFixed(2)}</strong> / month
-        </p>
-        <p>Renews: {service.renewalDate}</p>
-      </div>
+      <p className="service-price">
+        <strong>${Number(service.price || 0).toFixed(2)}</strong> / month
+      </p>
 
-      <Link className="details-link" to={`/services/${service.id}`}>
+      <p className="service-renewal">
+        Renews:{" "}
+        {service.renewalDate
+          ? new Date(service.renewalDate).toISOString().split("T")[0]
+          : "No date"}
+      </p>
+
+      <Link className="details-button" to={`/services/${serviceId}`}>
         View Details
       </Link>
     </article>
