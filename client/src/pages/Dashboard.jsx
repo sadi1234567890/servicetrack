@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { Layers, CheckCircle, DollarSign, PauseCircle } from "lucide-react";
 import StatCard from "../components/StatCard";
 import { useServices } from "../context/ServiceContext";
 
@@ -21,7 +22,7 @@ function Dashboard() {
   );
 
   const highestCostService = services.reduce((highest, service) => {
-    if (!highest || Number(service.price) > Number(highest.price)) {
+    if (!highest || Number(service.price || 0) > Number(highest.price || 0)) {
       return service;
     }
 
@@ -129,24 +130,28 @@ function Dashboard() {
           title="Total Services"
           value={services.length}
           description="Services currently being tracked"
+          icon={Layers}
         />
 
         <StatCard
           title="Active Services"
           value={activeServices.length}
           description="Currently active subscriptions"
+          icon={CheckCircle}
         />
 
         <StatCard
           title="Monthly Spend"
           value={`$${monthlySpend.toFixed(2)}`}
           description="Estimated total monthly cost"
+          icon={DollarSign}
         />
 
         <StatCard
           title="Paused Services"
           value={pausedServices.length}
           description="Services currently paused"
+          icon={PauseCircle}
         />
       </div>
 

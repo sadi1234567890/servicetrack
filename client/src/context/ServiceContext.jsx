@@ -6,10 +6,13 @@ import {
   deleteService,
   toggleServiceStatus,
 } from "../services/api";
+import { useAuth } from "./AuthContext";
 
 const ServiceContext = createContext();
 
 export function ServiceProvider({ children }) {
+  const { isAuthenticated, token } = useAuth();
+
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -23,6 +26,7 @@ export function ServiceProvider({ children }) {
       setServices(data);
     } catch (err) {
       setError(err.message || "Unable to load services.");
+      setServices([]);
     } finally {
       setLoading(false);
     }
@@ -67,12 +71,14 @@ export function ServiceProvider({ children }) {
   }
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-
-    if (token) {
+    if (isAuthenticated && token) {
       fetchServices();
+    } else {
+      setServices([]);
+      setError("");
+      setLoading(false);
     }
-  }, []);
+  }, [isAuthenticated, token]);
 
   return (
     <ServiceContext.Provider
